@@ -9,7 +9,8 @@ import initialPosts from "./data/db.js";
 
 export default function App() {
 
-    const [post, setPost] = useState(null); // post I am editing
+    const [posts, setPosts] = useState([]);
+    const [post, setPost] = useState(null);
     const [error, setError] = useState(null);
 
     const handleAddPost = async (newPost) => {
@@ -19,27 +20,45 @@ export default function App() {
                 : 1;
 
             const finalPost = {
-                id: id.toString(),
-                ...newPost,
+               id: id.toString(),
+               ...newPost,
             };
 
-            const response = await api.post("/posts", finalPost);
+            const response = await axios.post('http://localhost:8000/posts', finalPost);
 
             setPosts([...posts, response.data]);
         } catch (err) {
-            setError(err.message);
+            if(err.response){
+                //error came from server
+                setError(
+                    `Errror from server: status: ${err.response.status} -
+                     message: ${err.response.data}`
+                )
+            } else {
+                //newwork error, did not reach to server
+                setError(err.message);
+            }
         }
     };
 
     const handleDeletePost = async (postId) => {
         if (confirm("Are you sure you want to delete the post?")) {
-            try {
-                await api.delete(`/posts/${postId}`);
+               try {
+                await axios.delete(`http://localhost:8000/posts/${postId}`)
                 const newPosts = posts.filter((post) => post.id !== postId);
                 setPosts(newPosts);
-            } catch (err) {
-                setError(err.message);
-            }
+               } catch (err) {
+                    if(err.response){
+                    //error came from server
+                    setError(
+                        `Errror from server: status: ${err.response.status} -
+                        message: ${err.response.data}`
+                    )
+                    } else {
+                        //newwork error, did not reach to server
+                        setError(err.message);
+                    }
+               }
         } else {
             console.log("You chose not to delete the post!");
         }
